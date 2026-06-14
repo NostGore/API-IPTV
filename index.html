@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IPTV - Canales en Vivo</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="shortcut icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/TV-icon-2.svg/3840px-TV-icon-2.svg.png" type="image/png">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+:root {
+  --bg: #0a0a0f;
+  --surface: #12121a;
+  --surface2: #1a1a2e;
+  --surface3: #22223a;
+  --border: #2a2a44;
+  --accent: #e53935;
+  --accent2: #b71c1c;
+  --accent-glow: rgba(229,57,53,0.25);
+  --text: #f0f0f0;
+  --text2: #9999bb;
+  --text3: #666688;
+  --radius: 12px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* ── Sidebar ── */
+.sidebar {
+  width: 260px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.sidebar-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 20px; right: 20px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+}
+.sidebar-header .logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sidebar-header .logo-icon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 16px;
+  color: #fff;
+  box-shadow: 0 4px 12px var(--accent-glow);
+}
+.sidebar-header h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: #fff; }
+.sidebar-header h1 span { color: var(--accent); }
+.sidebar-header p { font-size: 11px; color: var(--text3); margin-top: 2px; letter-spacing: 0.3px; }
+
+.sidebar-menu { padding: 12px; }
+.sidebar-menu button {
+  display: flex; width: 100%; text-align: left;
+  background: none; border: none; color: var(--text2);
+  padding: 11px 14px; border-radius: 8px; cursor: pointer;
+  font-size: 13px; font-weight: 500;
+  transition: 0.15s; margin-bottom: 2px;
+  font-family: inherit;
+  align-items: center;
+  gap: 10px;
+}
+.sidebar-menu button:hover { background: var(--surface2); color: var(--text); }
+.sidebar-menu button.active {
+  background: linear-gradient(135deg, rgba(229,57,53,0.15), rgba(183,28,28,0.08));
+  color: var(--accent);
+  font-weight: 600;
+  border: 1px solid rgba(229,57,53,0.2);
+}
+.sidebar-menu button .ico { width: 20px; text-align: center; font-size: 15px; }
+
+.sidebar-section-label {
+  font-size: 10px; text-transform: uppercase;
+  color: var(--text3); letter-spacing: 1.5px;
+  padding: 16px 14px 6px; font-weight: 700;
+}
+
+#countryList { flex: 1; overflow-y: auto; padding: 0 12px 12px; min-height: 0; }
+#countryList button {
+  display: block; width: 100%; text-align: left;
+  background: none; border: none; color: var(--text2);
+  padding: 9px 14px; border-radius: 8px; cursor: pointer;
+  font-size: 13px; font-weight: 500;
+  transition: 0.15s; margin-bottom: 1px;
+  font-family: inherit;
+}
+#countryList button:hover { background: var(--surface2); color: var(--text); }
+#countryList button.active {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 2px 12px var(--accent-glow);
+}
+#countryList button .count {
+  float: right;
+  background: rgba(255,255,255,0.08);
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+}
+#countryList button.active .count { background: rgba(255,255,255,0.2); }
+
+/* ── Main ── */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.pages {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.page {
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+.page.active { display: flex; flex: 1; }
+
+.page-header {
+  padding: 24px 32px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+.page-header h2 { font-size: 22px; font-weight: 700; }
+.page-header h2 span { color: var(--accent); }
+.page-header p { font-size: 13px; color: var(--text3); margin-top: 4px; }
+
+.page-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 32px 32px;
+  min-height: 0;
+}
+
+/* ── INICIO ── */
+.intro {
+  max-width: 640px;
+  width: 100%;
+  padding: 16px 0 0;
+}
+.intro .badge {
+  display: inline-block;
+  background: rgba(229,57,53,0.12);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 14px;
+  border-radius: 20px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  border: 1px solid rgba(229,57,53,0.2);
+}
+.intro h2 {
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+}
+.intro h2 span { color: var(--accent); }
+.intro p {
+  color: var(--text2);
+  font-size: 14px;
+  margin-top: 10px;
+  line-height: 1.7;
+}
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  max-width: 640px;
+  width: 100%;
+  margin: 24px auto 0;
+}
+.feature-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+  transition: 0.15s;
+}
+.feature-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.feature-card .fc-icon { font-size: 28px; margin-bottom: 8px; }
+.feature-card h4 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.feature-card p { font-size: 12px; color: var(--text3); line-height: 1.5; }
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  max-width: 640px;
+  width: 100%;
+  margin: 24px auto 32px;
+}
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  text-align: center;
+}
+.stat-card .num { font-size: 22px; font-weight: 800; color: #fff; }
+.stat-card .label {
+  font-size: 10px; color: var(--text3); margin-top: 4px;
+  text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;
+}
+
+/* ── CANALES ── */
+.channel-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 8px;
+}
+.channel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: 0.15s;
+}
+.channel:hover { border-color: rgba(229,57,53,0.3); }
+.channel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  cursor: pointer;
+  user-select: none;
+}
+.channel-header:hover { background: var(--surface2); }
+.channel-header .name { font-size: 14px; font-weight: 500; }
+.channel-header .arrow { color: var(--text3); font-size: 11px; transition: transform 0.2s; }
+.channel.open .channel-header .arrow { transform: rotate(90deg); }
+.channel-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.25s ease;
+}
+.channel.open .channel-body { max-height: 100px; }
+.channel-body .url-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  padding: 10px 14px;
+}
+.channel-body .url-box input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text2);
+  font-size: 12px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  outline: none;
+}
+.channel-body .url-box .copy-btn {
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  padding: 5px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: 0.15s;
+}
+.channel-body .url-box .copy-btn:hover { background: var(--accent2); }
+.channel-body .url-box .copy-btn.copied { background: #2e7d32; }
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text3);
+}
+.empty-state p { font-size: 14px; }
+
+.view-toggle {
+  display: flex;
+  background: var(--bg);
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.view-toggle button {
+  background: none;
+  border: none;
+  color: var(--text3);
+  padding: 5px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: 0.15s;
+}
+.view-toggle button.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.channel-json {
+  display: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  color: var(--text);
+  overflow-x: auto;
+}
+.channel-json .cj-key { color: var(--accent); }
+.channel-json .cj-str { color: #a5d6a7; }
+.channel-json .cj-sep { color: var(--text3); }
+
+/* ── DOCUMENTACION ── */
+.doc-content { max-width: 720px; }
+.doc-content h3 { font-size: 18px; font-weight: 700; margin: 28px 0 12px; color: #fff; }
+.doc-content h3:first-child { margin-top: 0; }
+.doc-content h3 span { color: var(--accent); }
+.doc-content p { font-size: 14px; line-height: 1.7; color: var(--text2); margin-bottom: 12px; }
+.doc-content pre {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 18px;
+  font-size: 13px;
+  overflow-x: auto;
+  color: var(--text);
+  margin-bottom: 16px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  position: relative;
+}
+.doc-content pre .lang-tag {
+  position: absolute;
+  top: 8px; right: 10px;
+  font-size: 9px; text-transform: uppercase;
+  color: var(--text3); font-weight: 700; letter-spacing: 0.5px;
+  font-family: 'Inter', sans-serif;
+}
+.doc-content code { background: var(--surface2); padding: 2px 6px; border-radius: 4px; font-size: 13px; color: var(--accent); }
+.doc-content .note {
+  background: rgba(229,57,53,0.08);
+  border-left: 3px solid var(--accent);
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+  margin-bottom: 16px;
+}
+.doc-content .note p { margin-bottom: 0; font-size: 13px; }
+
+/* ── DONACIONES ── */
+
+/* ── Footer ── */
+footer {
+  text-align: center;
+  padding: 14px 32px;
+  color: var(--text3);
+  font-size: 11px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+</style>
+</head>
+<body>
+<div class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">
+      <div class="logo-icon">TV</div>
+      <div>
+        <h1>IP<span>TV</span></h1>
+        <p>Canales en vivo</p>
+      </div>
+    </div>
+  </div>
+  <div class="sidebar-menu">
+    <button class="active" data-page="inicio"><span class="ico"><i class="fas fa-home"></i></span> Inicio</button>
+    <button data-page="documentacion"><span class="ico"><i class="fas fa-book"></i></span> Documentaci&oacute;n</button>
+    <button data-page="donaciones"><span class="ico"><i class="fas fa-heart"></i></span> Donaciones</button>
+    <button data-page="reportar" style="margin-top:8px"><span class="ico"><i class="fas fa-flag"></i></span> Reportar</button>
+  </div>
+  <div class="sidebar-section-label">Pa&iacute;ses</div>
+  <div id="countryList"></div>
+</div>
+
+<div class="main">
+  <div class="pages">
+
+    <!-- INICIO -->
+    <div class="page active" id="page-inicio">
+      <div class="page-content" style="display:flex;flex-direction:column;align-items:center">
+        <div class="intro">
+          <div class="badge">En Vivo</div>
+          <h2>Transmisiones IPTV <span>gratuitas</span></h2>
+          <p>Explora y reproduce canales de televisi&oacute;n en vivo desde cualquier parte del mundo. Sin registro, sin pagos, sin complicaciones. Todos los enlaces son p&uacute;blicos y accesibles desde cualquier reproductor compatible con HLS.</p>
+        </div>
+
+        <div class="features">
+          <div class="feature-card">
+            <div class="fc-icon"><i class="fas fa-check-circle"></i></div>
+            <h4>Sin anuncios</h4>
+            <p>Disfruta los canales sin publicidad molesta ni ventanas emergentes</p>
+          </div>
+          <div class="feature-card">
+            <div class="fc-icon"><i class="fas fa-check-circle"></i></div>
+            <h4>Sin marca de agua</h4>
+            <p>Streams limpios, sin logotipos superpuestos ni marcas de terceros</p>
+          </div>
+          <div class="feature-card">
+            <div class="fc-icon"><i class="fas fa-star"></i></div>
+            <h4>Completamente gratis</h4>
+            <p>Sin suscripciones, sin tarjetas, sin cuotas. Todo 100% gratuito</p>
+          </div>
+          <div class="feature-card">
+            <div class="fc-icon"><i class="fas fa-folder-open"></i></div>
+            <h4>Enlaces directos</h4>
+            <p>Obt&eacute;n la URL .m3u8 real para usarla en tu reproductor favorito</p>
+          </div>
+          <div class="feature-card">
+            <div class="fc-icon"><i class="fas fa-share-alt"></i></div>
+            <h4>Comparte f&aacute;cil</h4>
+            <p>Cada canal tiene un enlace &uacute;nico que puedes copiar y compartir</p>
+          </div>
+          <div class="feature-card">
+            <div class="fc-icon"><i class="fas fa-play-circle"></i></div>
+            <h4>Reproductor integrado</h4>
+            <p>Abre cualquier canal directamente en el reproductor HTML del sitio</p>
+          </div>
+        </div>
+
+        <div class="stats" id="stats"></div>
+      </div>
+    </div>
+
+    <!-- CANALES -->
+    <div class="page" id="page-canales">
+      <div class="page-header" id="channelPageHeader">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:16px">
+          <div>
+            <h2>Selecciona un <span>pa&iacute;s</span></h2>
+            <p>Elige un canal para copiar su enlace IPTV</p>
+          </div>
+          <div class="view-toggle">
+            <button class="active" data-view="blocks" title="Vista por bloques"><i class="fas fa-th-large"></i></button>
+            <button data-view="json" title="Vista JSON"><i class="fas fa-code"></i></button>
+          </div>
+        </div>
+      </div>
+      <div class="page-content">
+        <div class="channel-list" id="channelList"></div>
+        <div class="channel-json" id="channelJson"></div>
+        <div class="empty-state" id="emptyState">
+          <p>Selecciona un pa&iacute;s del men&uacute; lateral</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- DOCUMENTACION -->
+    <div class="page" id="page-documentacion">
+      <div class="page-header">
+        <h2>Documentaci&oacute;n</h2>
+        <p>C&oacute;mo usar los enlaces IPTV</p>
+      </div>
+      <div class="page-content">
+        <div class="doc-content">
+          <h3>&#191;C&oacute;mo funciona?</h3>
+          <p>Los enlaces de esta plataforma apuntan a un <strong>reproductor web</strong> integrado. Puedes usarlos directamente en tu navegador o insertarlos en tu propia p&aacute;gina.</p>
+
+          <div class="note">
+            <p><strong>Importante:</strong> Los enlaces pueden dejar de funcionar sin previo aviso. Este sitio solo recopila enlaces p&uacute;blicos, no aloja ning&uacute;n contenido.</p>
+          </div>
+          <div class="note">
+            <p><strong>Horarios:</strong> Si alg&uacute;n canal no se reproduce, puede ser que est&eacute; fuera de su horario de transmisi&oacute;n. Muchos canales solo emiten en vivo en ciertos horarios del d&iacute;a. Vuelve m&aacute;s tarde para ver si se activa.</p>
+          </div>
+
+          <h3>Enlace <span>directo</span></h3>
+          <p>Abre el canal directamente en tu navegador:</p>
+          <pre>&lt;a href="<span class="doc-url" data-path="/player.html?=tv-peru-antenasur"></span>" target="_blank"&gt;Ver canal&lt;/a&gt;<span class="lang-tag">HTML</span></pre>
+
+          <h3>Iframe <span>embebido</span></h3>
+          <p>Incrusta el reproductor en tu propia p&aacute;gina web:</p>
+          <pre>&lt;iframe src="<span class="doc-url" data-path="/player.html?=tv-peru-antenasur"></span>"
+        width="640" height="360" frameborder="0"
+        allowfullscreen&gt;&lt;/iframe&gt;<span class="lang-tag">HTML</span></pre>
+
+          <h3>Vista previa <span>con imagen</span></h3>
+          <p>Usa una miniatura con enlace al reproductor:</p>
+          <pre>&lt;a href="<span class="doc-url" data-path="/player.html?=tv-peru-antenasur"></span>"&gt;
+  &lt;img src="miniatura.jpg" alt="Ver canal"&gt;
+&lt;/a&gt;<span class="lang-tag">HTML</span></pre>
+
+          <h3>Formato de <span>enlaces</span></h3>
+          <p>Cada canal tiene un enlace &uacute;nico con este formato:</p>
+          <pre><span class="doc-url" data-path="/player.html?=tv-{pais}-{canal}"></span><span class="lang-tag">SINTAXIS</span></pre>
+          <p>Donde <code>{pais}</code> es el c&oacute;digo del pa&iacute;s (ej: <code>peru</code>, <code>mexico</code>) y <code>{canal}</code> es el identificador del canal (ej: <code>antenasur</code>, <code>lasestrellas</code>).</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- DONACIONES -->
+    <div class="page" id="page-donaciones">
+      <div class="page-header">
+        <h2>Donaciones</h2>
+        <p>Apoya el proyecto</p>
+      </div>
+      <div class="page-content" style="display:flex;flex-direction:column;align-items:center">
+        <div style="max-width:400px;width:100%;text-align:center;padding-top:20px">
+          <p style="color:var(--text2);font-size:14px;margin-bottom:24px;line-height:1.6">Si este proyecto te es &uacute;til, considera apoyarlo. Cualquier aporte es bienvenido.</p>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:32px;text-align:center">
+            <div style="font-size:48px;margin-bottom:12px;color:var(--accent)"><i class="fab fa-paypal"></i></div>
+            <h3 style="font-size:18px;font-weight:700;margin-bottom:8px">PayPal</h3>
+            <p style="color:var(--text2);font-size:13px;margin-bottom:20px;line-height:1.5">Env&iacute;a una donaci&oacute;n &uacute;nica a trav&eacute;s de PayPal. Cualquier monto ayuda.</p>
+            <a href="https://paypal.me/devstorex" target="_blank" style="display:inline-block;background:var(--accent);color:#fff;padding:12px 32px;border-radius:6px;font-size:15px;font-weight:700;text-decoration:none;font-family:inherit">Donar con PayPal</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REPORTAR -->
+    <div class="page" id="page-reportar">
+      <div class="page-header">
+        <h2>Reportar <span>canal</span></h2>
+        <p>Notifica un enlace ca&iacute;do</p>
+      </div>
+      <div class="page-content">
+        <div class="doc-content">
+          <p>Si encuentras un canal que no funciona, rep&oacute;rtalo para revisarlo y solucionarlo.</p>
+          <div class="note" style="margin-top:20px">
+            <p><strong>Nota:</strong> Algunos canales solo transmiten en ciertos horarios. Si no se reproduce, puede ser que est&eacute; fuera del aire temporalmente.</p>
+          </div>
+          <h3>Correo <span>electr&oacute;nico</span></h3>
+          <p>Env&iacute;a un correo con los detalles del canal ca&iacute;do:</p>
+          <a href="mailto:colabmc.net@gmail.com?subject=Reporte%20de%20canal%20ca%C3%ADdo" style="display:inline-block;background:var(--accent);color:#fff;padding:10px 24px;border-radius:6px;font-size:14px;font-weight:700;text-decoration:none;font-family:inherit;margin-bottom:20px">Enviar reporte</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <footer>IPTV Canales en Vivo &mdash; Los enlaces son p&uacute;blicos</footer>
+</div>
+
+<script>
+var baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+var data = {};
+var selectedCountry = null;
+
+function updateDocUrls() {
+  var dir = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+  document.querySelectorAll('.doc-url').forEach(function(el) {
+    el.textContent = dir.replace(/\/$/, '') + el.dataset.path;
+  });
+}
+
+function switchPage(pageId) {
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.sidebar-menu button').forEach(function(b) { b.classList.remove('active'); });
+  document.querySelectorAll('#countryList button').forEach(function(b) { b.classList.remove('active'); });
+  document.getElementById('page-' + pageId).classList.add('active');
+  var btn = document.querySelector('.sidebar-menu button[data-page="' + pageId + '"]');
+  if (btn) btn.classList.add('active');
+  history.pushState(null, '', '?page=' + pageId);
+}
+
+document.querySelectorAll('.sidebar-menu button').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    switchPage(this.dataset.page);
+  });
+});
+
+window.addEventListener('popstate', function() {
+  var page = getPageFromUrl();
+  if (page.indexOf('canales-') === 0) {
+    var country = page.replace('canales-', '');
+    if (data[country]) { selectCountry(country); showCanales(country); }
+  } else if (document.getElementById('page-' + page)) {
+    switchPage(page);
+  }
+});
+
+function getPageFromUrl() {
+  var params = new URLSearchParams(window.location.search);
+  return params.get('page') || 'inicio';
+}
+
+function showCanales(country) {
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  document.getElementById('page-canales').classList.add('active');
+  document.querySelectorAll('.sidebar-menu button').forEach(function(b) { b.classList.remove('active'); });
+  history.pushState(null, '', '?page=canales-' + country);
+}
+
+var currentView = 'blocks';
+
+function renderChannels() {
+  var channels = data[selectedCountry] || [];
+  document.querySelector('#channelPageHeader h2').innerHTML = '<span>' + selectedCountry + '</span>';
+  document.querySelector('#channelPageHeader p').textContent = channels.length + ' canales disponibles';
+
+  var list = document.getElementById('channelList');
+  var jsonView = document.getElementById('channelJson');
+  var empty = document.getElementById('emptyState');
+  list.innerHTML = '';
+  jsonView.textContent = '';
+
+  if (channels.length === 0) { empty.style.display = ''; return; }
+  empty.style.display = 'none';
+
+  if (currentView === 'json') {
+    var lines = ['{'];
+    lines.push('  "canales": [');
+    channels.forEach(function(ch, i) {
+      var comma = i < channels.length - 1 ? ',' : '';
+      lines.push('    {');
+      lines.push('      "canal": "' + ch.canal + '",');
+      lines.push('      "pais": "' + selectedCountry + '",');
+      lines.push('      "enlace": "' + baseUrl + ch.enlace + '"');
+      lines.push('    }' + comma);
+    });
+    lines.push('  ]');
+    lines.push('}');
+    jsonView.textContent = lines.join('\n');
+    jsonView.style.display = 'block';
+    list.style.display = 'none';
+  } else {
+    jsonView.style.display = 'none';
+    list.style.display = '';
+    channels.forEach(function(ch) {
+      var el = document.createElement('div');
+      el.className = 'channel';
+
+      el.innerHTML =
+        '<div class="channel-header">' +
+          '<span class="name">' + ch.canal + '</span>' +
+          '<span class="arrow"><i class="fas fa-chevron-right"></i></span>' +
+        '</div>' +
+        '<div class="channel-body">' +
+          '<div class="url-box">' +
+            '<input type="text" readonly value="' + baseUrl + ch.enlace + '" spellcheck="false">' +
+            '<button class="copy-btn">Copiar</button>' +
+          '</div>' +
+        '</div>';
+
+      el.querySelector('.channel-header').addEventListener('click', function() {
+        var wasOpen = el.classList.contains('open');
+        document.querySelectorAll('.channel.open').forEach(function(c) { c.classList.remove('open'); });
+        if (!wasOpen) el.classList.add('open');
+      });
+
+      var copyBtn = el.querySelector('.copy-btn');
+      copyBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        navigator.clipboard.writeText(baseUrl + ch.enlace).then(function() {
+          copyBtn.textContent = 'Copiado';
+          copyBtn.classList.add('copied');
+          setTimeout(function() {
+            copyBtn.textContent = 'Copiar';
+            copyBtn.classList.remove('copied');
+          }, 2000);
+        });
+      });
+
+      list.appendChild(el);
+    });
+  }
+}
+
+function selectCountry(country) {
+  selectedCountry = country;
+  document.querySelectorAll('#countryList button').forEach(function(b) { b.classList.remove('active'); });
+  var countryBtn = document.querySelector('#countryList button[data-country="' + country + '"]');
+  if (countryBtn) countryBtn.classList.add('active');
+  currentView = 'blocks';
+  document.querySelectorAll('.view-toggle button').forEach(function(b) { b.classList.remove('active'); });
+  document.querySelector('.view-toggle button[data-view="blocks"]').classList.add('active');
+  renderChannels();
+}
+
+document.querySelectorAll('.view-toggle button').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.view-toggle button').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    currentView = btn.dataset.view;
+    if (selectedCountry) renderChannels();
+  });
+});
+
+fetch('channels.json')
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    data = d;
+    var keys = Object.keys(data).sort();
+
+    var nav = document.getElementById('countryList');
+    keys.forEach(function(country) {
+      var btn = document.createElement('button');
+      var count = data[country].length;
+      btn.innerHTML = country + ' <span class="count">' + count + '</span>';
+      btn.dataset.country = country;
+      btn.addEventListener('click', function() {
+        selectCountry(country);
+        showCanales(country);
+      });
+      nav.appendChild(btn);
+    });
+
+    var total = 0;
+    keys.forEach(function(k) { total += data[k].length; });
+    document.getElementById('stats').innerHTML =
+      '<div class="stat-card"><div class="num">' + keys.length + '</div><div class="label">Pa&iacute;ses</div></div>' +
+      '<div class="stat-card"><div class="num">' + total + '</div><div class="label">Canales</div></div>' +
+      '<div class="stat-card"><div class="num">Gratis</div><div class="label">Sin registro</div></div>';
+
+    var page = getPageFromUrl();
+    if (page.indexOf('canales-') === 0) {
+      var country = page.replace('canales-', '');
+      if (data[country]) {
+        selectCountry(country);
+        showCanales(country);
+      } else if (keys.length > 0) {
+        selectCountry(keys[0]);
+        showCanales(keys[0]);
+      }
+    } else if (document.getElementById('page-' + page)) {
+      if (keys.length > 0) selectCountry(keys[0]);
+      history.replaceState(null, '', '?page=' + page);
+      switchPage(page);
+    } else {
+      if (keys.length > 0) selectCountry(keys[0]);
+      history.replaceState(null, '', '?page=inicio');
+      switchPage('inicio');
+    }
+  });
+  updateDocUrls();
+</script>
+</body>
+</html>
