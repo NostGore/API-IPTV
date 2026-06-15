@@ -18,6 +18,15 @@ video { width: 100%; height: 100%; object-fit: contain; display: block; }
 .player-wrap:hover .controls, .controls.visible { opacity: 1; }
 .controls-inner { display: flex; align-items: center; gap: 12px; max-width: 1000px; margin: 0 auto; }
 
+@media (max-width: 480px) {
+  .controls { padding: 30px 12px 12px; }
+  .controls-inner { gap: 8px; }
+  .live-badge { font-size: 11px; }
+  .btn svg { width: 18px; height: 18px; }
+  .vol-wrap:hover .vol-slider { width: 50px; }
+  .big-play { width: 60px; height: 60px; font-size: 28px; }
+}
+
 .live-badge { display: flex; align-items: center; gap: 6px; color: #e53935; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; user-select: none; flex-shrink: 0; }
 .live-dot { width: 8px; height: 8px; background: #e53935; border-radius: 50%; animation: live-pulse 1.5s ease-in-out infinite; }
 @keyframes live-pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(0.85); } }
