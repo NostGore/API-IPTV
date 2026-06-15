@@ -337,6 +337,16 @@ body {
 }
 
 /* ── CANALES ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.channel-list .channel {
+  animation: fadeUp 0.3s ease forwards;
+  opacity: 0;
+}
+
 .channel-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -769,9 +779,10 @@ function renderChannels() {
   } else {
     jsonView.style.display = 'none';
     list.style.display = '';
-    channels.forEach(function(ch) {
+    channels.forEach(function(ch, i) {
       var el = document.createElement('div');
       el.className = 'channel';
+      el.style.animationDelay = (i * 0.03) + 's';
 
       el.innerHTML =
         '<div class="channel-header">' +
