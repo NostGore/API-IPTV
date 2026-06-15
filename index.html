@@ -794,14 +794,20 @@ function renderChannels() {
       var copyBtn = el.querySelector('.copy-btn');
       copyBtn.addEventListener('click', function(e) {
         e.stopPropagation();
-        navigator.clipboard.writeText(baseUrl + ch.enlace).then(function() {
-          copyBtn.textContent = 'Copiado';
-          copyBtn.classList.add('copied');
-          setTimeout(function() {
-            copyBtn.textContent = 'Copiar';
-            copyBtn.classList.remove('copied');
-          }, 2000);
-        });
+        var input = this.parentElement.querySelector('input');
+        input.select();
+        input.setSelectionRange(0, 99999);
+        try {
+          document.execCommand('copy');
+        } catch (err) {
+          navigator.clipboard.writeText(input.value);
+        }
+        copyBtn.textContent = 'Copiado';
+        copyBtn.classList.add('copied');
+        setTimeout(function() {
+          copyBtn.textContent = 'Copiar';
+          copyBtn.classList.remove('copied');
+        }, 2000);
       });
 
       list.appendChild(el);
